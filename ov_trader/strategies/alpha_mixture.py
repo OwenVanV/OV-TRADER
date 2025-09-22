@@ -8,6 +8,10 @@ import pandas as pd
 class AlphaModel:
     """Placeholder alpha model that mixes multiple signals."""
 
+    def __init__(self) -> None:
+        self.latest_features: pd.DataFrame | None = None
+
+
     def generate_signals(self, dataset, feature_builder) -> pd.DataFrame:
         """Generate alpha scores for each instrument in the dataset.
 
@@ -21,6 +25,7 @@ class AlphaModel:
 
         raw = dataset.prepare("train")  # type: ignore[attr-defined]
         features = feature_builder.build(raw)
+        self.latest_features = features
         features["alpha"] = (
             0.4 * features["momentum_10"]
             + 0.3 * features["momentum_21"]

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Iterable, Optional
+
+import pandas as pd
 
 try:  # pragma: no cover - qlib is heavy and optional
     import qlib  # type: ignore
@@ -52,9 +54,77 @@ class ForecastAgent(BaseAgent):
         dataset = self.dataset_builder.build()
         alpha_df = self.alpha_model.generate_signals(dataset, self.feature_builder)
         ranked = alpha_df.iloc[-1].sort_values(ascending=False)
+        market_snapshot = self._build_market_snapshot(ranked.index[:5])
         context.shared_memory[self.name] = ForecastResult(
             scores=ranked.to_dict(),
             metadata={"latest_date": ranked.name if hasattr(ranked, "name") else "unknown"},
         )
         context.market_state.setdefault("alpha", ranked.to_dict())
+        if market_snapshot:
+            context.market_state.setdefault("market_data", {}).update(market_snapshot)
         return context
+
+    def _build_market_snapshot(self, instruments: Iterable[str]) -> Dict[str, Dict[str, float]]:
+        features = getattr(self.alpha_model, "latest_features", None)
+        if features is None or not isinstance(features, pd.DataFrame):
+            return {}
+        if features.empty:
+            return {}
+        if not isinstance(features.index, pd.MultiIndex):
+            return {}
+
+        index_names = list(features.index.names)
+        try:
+            instrument_level = index_names.index("instrument")
+        except ValueError:
+            instrument_level = len(index_names) - 1
+
+        snapshot: Dict[str, Dict[str, float]] = {}
+        for instrument in instruments:
+            try:
+                instrument_frame = features.xs(instrument, level=instrument_level)
+            except Exception:  # pragma: no cover - qlib structure may vary
+                continue
+
+            if getattr(instrument_frame, "empty", False):
+                continue
+
+            if hasattr(instrument_frame, "iloc"):
+                row = instrument_frame.iloc[-1]
+            else:  # pragma: no cover - defensive fallback
+                row = instrument_frame
+
+            serialised = self._serialise_feature_row(row)
+            if serialised:
+                snapshot[str(instrument)] = serialised
+
+        return snapshot
+
+    def _serialise_feature_row(self, row: pd.Series) -> Dict[str, float]:
+        metrics: Dict[str, float] = {}
+        timestamp = getattr(row, "name", None)
+        if timestamp is not None:
+            metrics["as_of"] = str(timestamp)
+
+        fields = [
+            "close",
+            "open",
+            "high",
+            "low",
+            "volume",
+            "ma_5",
+            "ma_10",
+            "ma_21",
+            "momentum_5",
+            "momentum_10",
+            "momentum_21",
+            "volatility_21",
+        ]
+
+        for field in fields:
+            if field in row.index:
+                value = row[field]
+                if pd.notna(value):
+                    metrics[field] = float(value)
+
+        return metrics

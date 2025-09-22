@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .agents.decision_agent import DecisionAgent
 from .agents.execution_agent import ExecutionAgent
 from .agents.forecast_agent import ForecastAgent
 from .agents.news_agent import NewsSentimentAgent
@@ -28,9 +29,12 @@ def load_config(path: Path | None) -> TraderConfig:
 def build_orchestrator(config: TraderConfig) -> Orchestrator:
     news_agent = NewsSentimentAgent(config.llm_research)
     forecast_agent = ForecastAgent(config.data)
+    decision_agent = DecisionAgent(config.llm_research)
     portfolio_agent = PortfolioAgent(config.risk)
     execution_agent = ExecutionAgent(config.execution)
-    return Orchestrator([news_agent, forecast_agent, portfolio_agent, execution_agent])
+    return Orchestrator(
+        [news_agent, forecast_agent, decision_agent, portfolio_agent, execution_agent]
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

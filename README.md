@@ -19,6 +19,9 @@ for LLM-powered research agents.
   - **NewsSentimentAgent** – aggregates qualitative information and summarises it
     via an LLM.
   - **ForecastAgent** – consumes Qlib datasets and produces alpha signals.
+  - **DecisionAgent** – queries Azure OpenAI (configured for future GPT-5
+    deployments) to synthesise alpha, price action, and news into a final
+    portfolio instruction.
   - **PortfolioAgent** – converts alpha signals into target allocations with
     simple risk constraints.
   - **ExecutionAgent** – bridges to brokers via [PyTrader](https://github.com/MetaQuotes/MetaTrader5-API).
@@ -58,6 +61,28 @@ for LLM-powered research agents.
        "provider": "openai",
        "model": "gpt-4o-mini",
        "api_key": "sk-..."
+     }
+   }
+   ```
+
+   The value supplied in `model` should match the Azure deployment name configured
+   for your GPT-5-capable endpoint.
+
+   To enable Azure OpenAI deployments (e.g. a future GPT-5 capable endpoint) the
+   configuration can be extended with the deployment details:
+
+   ```json
+   {
+     "llm_research": {
+       "provider": "azure",
+       "model": "gpt-5",
+       "api_key": "<azure-openai-key>",
+       "extra": {
+         "azure_endpoint": "https://your-resource.openai.azure.com/",
+         "azure_api_version": "2024-02-15-preview",
+         "azure_deployment": "gpt5-trading",
+         "system_message": "You are GPT-5, an elite trading strategist."
+       }
      }
    }
    ```
