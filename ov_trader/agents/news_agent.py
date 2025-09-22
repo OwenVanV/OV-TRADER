@@ -24,7 +24,7 @@ class NewsSentimentAgent(LLMEnabledAgent):
         aggregation service.
         """
 
-        now = dt.datetime.utcnow()
+        now = dt.datetime.now(dt.timezone.utc)
         return [
             f"[{now:%Y-%m-%d %H:%M}] Placeholder headline about macro environment",
             f"[{now:%Y-%m-%d %H:%M}] Placeholder crypto regulation update",
@@ -38,6 +38,6 @@ class NewsSentimentAgent(LLMEnabledAgent):
             "produce:\n"
             "1. A sentiment score between -1 (bearish) and +1 (bullish).\n"
             "2. Key catalysts relevant to equities and crypto.\n"
-            "3. A list of tickers that could be impacted."\n
+            "3. A list of tickers that could be impacted.\n"
             f"\nHeadlines:\n{joined}\n"
         )
