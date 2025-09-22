@@ -4,3 +4,6 @@ microsoft-qlib>=0.9.0
 pytrader @ git+https://github.com/jeanboydev/pytrader-api.git
 openai>=1.0
 requests>=2.31
+fastapi>=0.110
+uvicorn[standard]>=0.25
+pydantic>=2.6

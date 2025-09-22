@@ -28,6 +28,10 @@ for LLM-powered research agents.
 - Configurable data ingestion via Qlib bundles for equities and crypto.
 - Backtesting harness using Qlib's `TopkDropoutStrategy`.
 - CLI entry point for running a full decision cycle.
+- FastAPI control plane with REST endpoints for triggering live cycles, inspecting
+  agent telemetry, and launching backtests.
+- Next.js dashboard for orchestrating trades, editing configuration, and
+  reviewing multi-agent outputs.
 
 ## Quick start
 
@@ -95,6 +99,39 @@ for LLM-powered research agents.
 
    The CLI logs the output of each agent and records cross-agent communication via
    the shared memory in :class:`~ov_trader.agents.base.AgentContext`.
+
+## Web dashboard
+
+The repository ships with a lightweight API server and Next.js front end for
+interactive experimentation.
+
+### Start the API service
+
+```bash
+uvicorn ov_trader.server.api:app --reload --port 8000
+```
+
+The FastAPI layer exposes endpoints such as `/dashboard`, `/runs`, `/config`, and
+`/backtests`.  These surface the same orchestration flow as the CLI while
+persisting run history and configuration updates in memory.
+
+### Start the Next.js client
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+The dashboard expects the API at `http://localhost:8000` by default.  Override
+the base URL via `NEXT_PUBLIC_API_BASE_URL` when deploying to another host.
+From the UI you can:
+
+- Trigger new agent cycles with optional natural-language guidance.
+- Launch backtests and inspect the resulting risk statistics.
+- Review per-agent transcripts alongside portfolio instructions.
+- Edit data, risk, execution, and LLM configuration values without touching
+  configuration files.
 
 ## Extending the system
 

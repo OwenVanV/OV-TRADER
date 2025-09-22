@@ -17,9 +17,9 @@ the :class:`LLMConfig`.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields, is_dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 
 @dataclass(slots=True)
@@ -102,7 +102,10 @@ class TraderConfig:
     def from_dict(cls, data: Dict[str, object]) -> "TraderConfig":
         """Create a :class:`TraderConfig` from nested dictionaries."""
 
-        data_cfg = data.get("data", {})
+        data_cfg = dict(data.get("data", {}))
+        qlib_root = data_cfg.get("qlib_root")
+        if qlib_root is not None and not isinstance(qlib_root, Path):
+            data_cfg["qlib_root"] = Path(qlib_root)
         llm_research_cfg = data.get("llm_research", {})
         llm_forecasting_cfg = data.get("llm_forecasting")
         execution_cfg = data.get("execution", {})
@@ -124,3 +127,57 @@ DEFAULT_CONFIG = TraderConfig(
     llm_research=LLMConfig(provider="openai", model="gpt-4o-mini"),
 )
 """A sensible default configuration for experimentation."""
+
+
+def _serialise_dataclass(value: Any) -> Any:
+    """Recursively convert dataclass instances into serialisable dictionaries."""
+
+    if is_dataclass(value):
+        result: Dict[str, Any] = {}
+        for field_info in fields(value):
+            result[field_info.name] = _serialise_dataclass(getattr(value, field_info.name))
+        return result
+
+    if isinstance(value, dict):
+        return {key: _serialise_dataclass(val) for key, val in value.items()}
+
+    if isinstance(value, (list, tuple, set)):
+        return [_serialise_dataclass(item) for item in value]
+
+    if isinstance(value, Path):
+        return str(value)
+
+    return value
+
+
+def trader_config_to_dict(config: TraderConfig) -> Dict[str, Any]:
+    """Convert a :class:`TraderConfig` into a plain dictionary."""
+
+    return _serialise_dataclass(config)
+
+
+def _deep_merge(base: Dict[str, Any], update: Dict[str, Any]) -> Dict[str, Any]:
+    """Return a deep merged copy of ``base`` updated with ``update``."""
+
+    merged = dict(base)
+    for key, value in update.items():
+        if (
+            key in merged
+            and isinstance(merged[key], dict)
+            and isinstance(value, dict)
+        ):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def apply_config_update(config: TraderConfig, update: Dict[str, Any]) -> TraderConfig:
+    """Return a new configuration with ``update`` applied on top of ``config``."""
+
+    if not update:
+        return config
+
+    current = trader_config_to_dict(config)
+    merged = _deep_merge(current, update)
+    return TraderConfig.from_dict(merged)
