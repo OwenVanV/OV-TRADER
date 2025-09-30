@@ -105,6 +105,27 @@ export interface BacktestRecord {
 export interface DashboardMetrics {
   total_runs: number;
   total_backtests: number;
+  total_demos?: number;
+}
+
+export interface WalletSnapshot {
+  label: string;
+  starting_balance: number;
+  balance: number;
+  summary: string;
+  history: { label: string; balance: number }[];
+}
+
+export interface DemoRunRecord {
+  id: string;
+  timestamp: string;
+  duration?: number;
+  initial_balance: number;
+  wallet: WalletSnapshot;
+  alpha?: Record<string, unknown>;
+  weights?: Record<string, unknown>;
+  portfolio_returns?: Record<string, unknown>;
+  notes?: string;
 }
 
 export interface DashboardData {
@@ -112,6 +133,8 @@ export interface DashboardData {
   latest_run: RunRecord | null;
   runs: RunRecord[];
   backtests: BacktestRecord[];
+  latest_demo: DemoRunRecord | null;
+  demos: DemoRunRecord[];
   metrics: DashboardMetrics;
   error?: string;
 }

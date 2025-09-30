@@ -24,7 +24,9 @@ from ..config import (
     trader_config_to_dict,
 )
 from ..cli import build_orchestrator
+from ..samples.quickstart import run_demo as run_quickstart_demo
 from ..utils.logging import configure_logging
+from ..utils.wallet import VirtualWallet
 from ..backtesting.runner import Backtester
 
 
@@ -39,6 +41,7 @@ class TradingService:
         self._history: List[Dict[str, Any]] = []
         self._backtests: List[Dict[str, Any]] = []
         self._last_context: AgentContext | None = None
+        self._demo_runs: List[Dict[str, Any]] = []
 
     # ------------------------------------------------------------------
     # Configuration management
@@ -159,6 +162,63 @@ class TradingService:
         return list(self._backtests[:limit])
 
     # ------------------------------------------------------------------
+    # Demo / sample scenarios
+    # ------------------------------------------------------------------
+    def run_sample_demo(
+        self,
+        *,
+        initial_balance: float = 100.0,
+        notes: str | None = None,
+    ) -> Dict[str, Any]:
+        """Execute the quickstart demo and record the resulting wallet stats."""
+
+        started = dt.datetime.now(dt.UTC)
+        result = run_quickstart_demo(initial_balance=initial_balance)
+
+        wallet: VirtualWallet = result["wallet"]
+
+        record = {
+            "id": str(uuid.uuid4()),
+            "timestamp": dt.datetime.now(dt.UTC).isoformat(),
+            "duration": (dt.datetime.now(dt.UTC) - started).total_seconds(),
+            "initial_balance": wallet.starting_balance,
+            "wallet": {
+                "label": wallet.label,
+                "starting_balance": wallet.starting_balance,
+                "balance": wallet.balance,
+                "summary": wallet.summary(),
+                "history": [
+                    {"label": label, "balance": balance}
+                    for label, balance in wallet.history
+                ],
+            },
+            "alpha": self._serialise_value(result.get("alpha")),
+            "weights": self._serialise_value(result.get("weights")),
+            "portfolio_returns": self._serialise_value(
+                result.get("portfolio_returns")
+            ),
+        }
+
+        if notes:
+            record["notes"] = notes
+
+        self._demo_runs.insert(0, record)
+        self._demo_runs = self._demo_runs[:10]
+        return record
+
+    def list_demo_runs(self, limit: int | None = None) -> List[Dict[str, Any]]:
+        """Return previously executed demo simulations."""
+
+        if limit is None:
+            return list(self._demo_runs)
+        return list(self._demo_runs[:limit])
+
+    def latest_demo(self) -> Dict[str, Any] | None:
+        """Return the most recent demo run if available."""
+
+        return self._demo_runs[0] if self._demo_runs else None
+
+    # ------------------------------------------------------------------
     # Dashboard helpers
     # ------------------------------------------------------------------
     def get_dashboard(self) -> Dict[str, Any]:
@@ -169,9 +229,12 @@ class TradingService:
             "latest_run": self.latest_run(),
             "runs": self.list_runs(limit=10),
             "backtests": self.list_backtests(limit=5),
+            "latest_demo": self.latest_demo(),
+            "demos": self.list_demo_runs(limit=5),
             "metrics": {
                 "total_runs": len(self._history),
                 "total_backtests": len(self._backtests),
+                "total_demos": len(self._demo_runs),
             },
         }
 
@@ -257,6 +320,14 @@ class TradingService:
             return value.isoformat()
 
         if pd is not None:
+            if isinstance(value, pd.DataFrame):  # pragma: no cover - optional dependency
+                return [
+                    {
+                        key: self._serialise_value(val)
+                        for key, val in record.items()
+                    }
+                    for record in value.reset_index().to_dict(orient="records")
+                ]
             if isinstance(value, pd.Timestamp):
                 return value.isoformat()
             if isinstance(value, pd.Series):  # pragma: no cover - optional dependency

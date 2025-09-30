@@ -50,7 +50,9 @@ export function createEmptyDashboard(error?: string): DashboardData {
     latest_run: null,
     runs: [],
     backtests: [],
-    metrics: { total_runs: 0, total_backtests: 0 },
+    latest_demo: null,
+    demos: [],
+    metrics: { total_runs: 0, total_backtests: 0, total_demos: 0 },
     error,
   };
 }

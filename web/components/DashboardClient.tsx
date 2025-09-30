@@ -7,6 +7,7 @@ import {
   runTradingCycle,
   saveConfig,
   startBacktest,
+  runSampleDemo,
 } from "@/lib/api";
 import { DashboardData, TraderConfig } from "@/lib/types";
 import AgentInsights from "./AgentInsights";
@@ -14,6 +15,7 @@ import BacktestPanel from "./BacktestPanel";
 import ConfigForm from "./ConfigForm";
 import RunHistory from "./RunHistory";
 import TradingControls from "./TradingControls";
+import SampleDemoPanel from "./SampleDemoPanel";
 
 interface DashboardClientProps {
   initialData: DashboardData;
@@ -26,7 +28,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   );
   const [isPending, startTransition] = useTransition();
 
-  const metrics = useMemo(() => data.metrics ?? { total_runs: 0, total_backtests: 0 }, [data.metrics]);
+  const metrics = useMemo(
+    () => data.metrics ?? { total_runs: 0, total_backtests: 0, total_demos: 0 },
+    [data.metrics],
+  );
 
   const refresh = useCallback(async () => {
     const next = await refreshDashboard();
@@ -69,6 +74,28 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     [refresh],
   );
 
+  const handleDemoRun = useCallback(
+    (options?: { initialBalance?: number; notes?: string }) => {
+      startTransition(async () => {
+        setStatusMessage("Executing sample demo...");
+        try {
+          const demo = await runSampleDemo(options);
+          await refresh();
+          const timestamp = demo.timestamp
+            ? new Date(demo.timestamp).toLocaleString()
+            : new Date().toLocaleString();
+          const balance = demo.wallet?.balance ?? demo.initial_balance;
+          setStatusMessage(
+            `Sample demo finished at ${timestamp}. Final balance: ${balance.toFixed(2)} ${demo.wallet?.label ?? "USD"}.`,
+          );
+        } catch (error) {
+          setStatusMessage(`Sample demo failed: ${(error as Error).message}`);
+        }
+      });
+    },
+    [refresh],
+  );
+
   const handleConfigSave = useCallback(
     (config: TraderConfig) => {
       startTransition(async () => {
@@ -97,6 +124,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <div className="text-sm text-right text-slate-400">
           <p>Total cycles: {metrics.total_runs}</p>
           <p>Backtests: {metrics.total_backtests}</p>
+          <p>Sample demos: {metrics.total_demos ?? 0}</p>
         </div>
       </header>
 
@@ -129,6 +157,13 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <RunHistory runs={data.runs} />
         <BacktestPanel backtests={data.backtests} />
       </div>
+
+      <SampleDemoPanel
+        busy={isPending}
+        latestDemo={data.latest_demo}
+        demos={data.demos}
+        onRunDemo={handleDemoRun}
+      />
 
       <ConfigForm
         busy={isPending}

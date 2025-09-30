@@ -176,6 +176,8 @@ From the UI you can:
 - Review per-agent transcripts alongside portfolio instructions.
 - Edit data, risk, execution, and LLM configuration values without touching
   configuration files.
+- Execute the synthetic quickstart demo, monitor the virtual wallet balance, and
+  review the resulting alpha/portfolio payloads without touching the CLI.
 
 ### Optional: install PyTrader
 
