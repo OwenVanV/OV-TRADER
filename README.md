@@ -24,7 +24,7 @@ for LLM-powered research agents.
     portfolio instruction.
   - **PortfolioAgent** – converts alpha signals into target allocations with
     simple risk constraints.
-  - **ExecutionAgent** – bridges to brokers via [PyTrader](https://github.com/MetaQuotes/MetaTrader5-API).
+  - **ExecutionAgent** – bridges to brokers via the PyTrader API (optional manual install).
 - Configurable data ingestion via Qlib bundles for equities and crypto.
 - Backtesting harness using Qlib's `TopkDropoutStrategy`.
 - CLI entry point for running a full decision cycle.
@@ -41,8 +41,12 @@ for LLM-powered research agents.
    pip install -r requirements.txt
    ```
 
-   Required packages include `microsoft-qlib`, `pytrader`, `pandas`, `numpy`, and
-   an LLM client (e.g. `openai`).  Many of these libraries require Python 3.10+.
+   Required packages include `microsoft-qlib`, `pandas`, `numpy`, and an LLM
+   client (e.g. `openai`).  Many of these libraries require Python 3.10+.
+
+   The PyTrader bridge is not distributed via PyPI and must be installed
+   separately if you plan to connect to a MetaTrader brokerage.  See
+   [Optional: install PyTrader](#optional-install-pytrader) for guidance.
 
 2. Download the Qlib US data bundle:
 
@@ -150,6 +154,23 @@ From the UI you can:
 - Review per-agent transcripts alongside portfolio instructions.
 - Edit data, risk, execution, and LLM configuration values without touching
   configuration files.
+
+### Optional: install PyTrader
+
+The execution layer integrates with the proprietary
+[`pytrader_api`](https://github.com/jeanboydev/pytrader-api) client used to
+bridge into MetaTrader terminals.  That repository is private and not published
+on PyPI.  If you have access rights, install it manually after the base
+dependencies:
+
+```bash
+pip install git+https://github.com/jeanboydev/pytrader-api.git
+```
+
+If you do not install the client, the `ExecutionAgent` will remain inactive and
+raise a descriptive error when asked to submit live orders.  The rest of the
+research workflow—including data ingestion, forecasting, decisioning, and
+backtesting—continues to operate without it.
 
 ## Extending the system
 
