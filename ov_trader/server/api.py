@@ -43,6 +43,15 @@ class BacktestRequest(BaseModel):
     override_config: Optional[Dict[str, Any]] = Field(default=None, alias="overrideConfig")
 
 
+class DemoRequest(BaseModel):
+    """Request body for executing the quickstart demo."""
+
+    model_config = ConfigDict(populate_by_name=True, extra="allow")
+
+    notes: Optional[str] = None
+    initial_balance: float = Field(default=100.0, alias="initialBalance", gt=0)
+
+
 service = TradingService()
 
 app = FastAPI(title="OV Trader API", version="0.1.0")
@@ -63,7 +72,7 @@ async def root() -> Dict[str, Any]:
     return {
         "name": "OV Trader API",
         "version": "0.1.0",
-        "endpoints": ["/dashboard", "/runs", "/config", "/backtests"],
+        "endpoints": ["/dashboard", "/runs", "/config", "/backtests", "/demo"],
     }
 
 
@@ -145,3 +154,23 @@ async def list_backtests(limit: int = 10) -> Dict[str, Any]:
     """Return previously executed backtests."""
 
     return {"backtests": service.list_backtests(limit=limit)}
+
+
+@app.get("/demo", tags=["demo"])
+async def list_demos(limit: int = 5) -> Dict[str, Any]:
+    """Return demo history."""
+
+    return {"demos": service.list_demo_runs(limit=limit), "latest_demo": service.latest_demo()}
+
+
+@app.post("/demo", tags=["demo"])
+async def trigger_demo(request: DemoRequest) -> Dict[str, Any]:
+    """Execute the quickstart demo scenario."""
+
+    record = await run_in_threadpool(
+        lambda: service.run_sample_demo(
+            initial_balance=request.initial_balance,
+            notes=request.notes,
+        )
+    )
+    return {"demo": record}
