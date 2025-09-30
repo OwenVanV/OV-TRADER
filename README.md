@@ -44,6 +44,12 @@ for LLM-powered research agents.
    Required packages include `microsoft-qlib`, `pandas`, `numpy`, and an LLM
    client (e.g. `openai`).  Many of these libraries require Python 3.10+.
 
+   > **Note:** The project intentionally pins NumPy below 2.0 because the
+   > official pandas wheels for Windows are still built against the 1.26.x ABI.
+   > If you installed an earlier dependency set, reinstalling with the updated
+   > requirements file will resolve `ValueError: numpy.dtype size changed` errors
+   > when importing pandas.
+
    The PyTrader bridge is not distributed via PyPI and must be installed
    separately if you plan to connect to a MetaTrader brokerage.  See
    [Optional: install PyTrader](#optional-install-pytrader) for guidance.

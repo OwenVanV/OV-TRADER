@@ -1,5 +1,8 @@
-pandas==2.2.2
-numpy==2.0.1
+pandas>=2.2.2,<2.3
+# Pin NumPy below 2.0 to avoid binary compatibility issues with the
+# prebuilt pandas wheels on Windows. NumPy 1.26.4 is the latest release
+# in the 1.x series and works with pandas 2.2.x while keeping qlib happy.
+numpy>=1.26.4,<2.0
 microsoft-qlib>=0.9.0
 # The PyTrader API is an optional dependency sourced from a private repository.
 # See README for manual installation steps if you have access to the provider's client.
