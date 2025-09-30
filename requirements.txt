@@ -1,5 +1,5 @@
-pandas>=2.0
-numpy>=1.24
+pandas==2.1.4
+numpy==1.26.4
 microsoft-qlib>=0.9.0
 pytrader @ git+https://github.com/jeanboydev/pytrader-api.git
 openai>=1.0
