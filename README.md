@@ -105,6 +105,24 @@ for LLM-powered research agents.
 The repository ships with a lightweight API server and Next.js front end for
 interactive experimentation.
 
+### Shared environment configuration
+
+A repository level `.env` file is provided so that both the FastAPI backend and
+the Next.js frontend read the same configuration.  Update the placeholder
+values (for example the API keys) before running the stack locally.
+
+### Quick start (PowerShell)
+
+On Windows you can start both services with a single command:
+
+```powershell
+./start.ps1
+```
+
+The script loads variables from `.env`, ensures the required tools are
+available, and watches both processes.  Use `-NoBackend` or `-NoFrontend` to
+skip either service.
+
 ### Start the API service
 
 ```bash
