@@ -28,7 +28,8 @@ function Set-ProcessEnvironmentFromFile {
         $value = $parts[1].Trim().Trim('"').Trim("'")
         if (-not $name) { continue }
 
-        if (-not $env:$name) {
+        $existingItem = Get-Item -Path "env:$name" -ErrorAction SilentlyContinue
+        if (-not $existingItem -or [string]::IsNullOrEmpty($existingItem.Value)) {
             Set-Item -Path "env:$name" -Value $value
         }
     }
