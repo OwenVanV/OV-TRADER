@@ -37,7 +37,10 @@ class ExecutionAgent(BaseAgent):
 
     def connect(self) -> None:
         if Pytrader_API is None:
-            raise RuntimeError("pytrader is not installed; execution agent cannot connect")
+            raise RuntimeError(
+                "PyTrader API is not installed. Install the private pytrader_api package "
+                "to enable live execution (see README section 'Optional: install PyTrader')."
+            )
         self.client = Pytrader_API()
         self.client.connect(
             self.config.server_host,
