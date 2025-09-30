@@ -16,9 +16,23 @@ class FeatureBuilder:
         """
 
         augmented = df.copy()
-        for window in (5, 10, 21):
-            augmented[f"ma_{window}"] = df["close"].rolling(window).mean()
-            augmented[f"momentum_{window}"] = df["close"].pct_change(window)
-        augmented["volatility_21"] = df["close"].pct_change().rolling(21).std()
+        if isinstance(df.index, pd.MultiIndex) and "instrument" in df.index.names:
+            grouped = df.groupby(level="instrument", group_keys=False)
+
+            for window in (5, 10, 21):
+                augmented[f"ma_{window}"] = grouped["close"].apply(lambda x: x.rolling(window).mean())
+                augmented[f"momentum_{window}"] = grouped["close"].apply(
+                    lambda x: x.pct_change(window)
+                )
+
+            augmented["volatility_21"] = grouped["close"].apply(
+                lambda x: x.pct_change().rolling(21).std()
+            )
+        else:
+            for window in (5, 10, 21):
+                augmented[f"ma_{window}"] = df["close"].rolling(window).mean()
+                augmented[f"momentum_{window}"] = df["close"].pct_change(window)
+            augmented["volatility_21"] = df["close"].pct_change().rolling(21).std()
+
         augmented.dropna(inplace=True)
         return augmented

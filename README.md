@@ -35,6 +35,22 @@ for LLM-powered research agents.
 
 ## Quick start
 
+### Instant demo (no external data required)
+
+To get a feel for the platform without installing Qlib or sourcing market data, run
+the self-contained sample scenario:
+
+```bash
+python -m ov_trader.samples.quickstart
+```
+
+The script spins up a miniature synthetic market, routes it through the alpha
+model, and tracks the outcome via a virtual wallet seeded with ``$100``.  The
+wallet balance increases or decreases as the portfolio gains or loses value,
+providing an immediate view of the end-to-end pipeline.
+
+### Full environment
+
 1. Install system dependencies:
 
    ```bash
